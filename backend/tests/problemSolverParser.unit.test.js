@@ -91,6 +91,8 @@ O(n)`;
 
     expect(section).toContain("# Complexity");
     expect(section).toContain('print("hello")');
+    expect(section).not.toContain("## Complexity");
+    expect(section).not.toContain("O(n)");
   });
 
   // ADD THE NEW TEST HERE 👇
@@ -109,6 +111,8 @@ O(n)`;
 
     expect(section).toContain("# Steps");
     expect(section).toContain('print("hello")');
+    expect(section).not.toContain("## Complexity");
+    expect(section).not.toContain("O(n)");
   });
 
   it("extracts the section text between the heading and the next heading", () => {
