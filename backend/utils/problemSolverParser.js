@@ -62,8 +62,8 @@ function extractSection(text, heading) {
   let offset = 0;
 
   for (const line of lines) {
-    if (/^\s*(`{3,})(.*)$/.test(line)) {
-      const match = line.match(/^\s*(`{3,})(.*)$/);
+    if (/^ {0,3}(`{3,})(.*)$/.test(line)) {
+      const match = line.match(/^ {0,3}(`{3,})(.*)$/);
       const fence = match[1];
       const trailing = match[2].trim();
 
