@@ -267,6 +267,12 @@ const updateQuestionNote = async (req, res) => {
 /**
  * Build a balanced day-by-day study plan from a list of problems.
  * @route POST /api/question/study-plan
+ *
+ * Structural validation (non-empty problems array, each with a usable title,
+ * bounded field sizes, valid days range) happens in validateBuildStudyPlan
+ * at the route layer — see Input_validators/ValidateQuestions.js. The checks
+ * below are a defensive backstop (same dual-layer pattern as getMyQuestions)
+ * so this handler is still safe if ever called without that middleware.
  */
 const buildStudyPlanHandler = async (req, res) => {
   const { problems, days } = req.body || {};
