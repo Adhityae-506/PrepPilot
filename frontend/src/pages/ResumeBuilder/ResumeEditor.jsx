@@ -380,6 +380,10 @@ const TEMPLATES = {
   \\href{https://linkedin.com/in/priyamenon}{linkedin.com/in/priyamenon}
 \\end{center}
 
+%----------------- SUMMARY -----------------
+\\section*{Summary}
+Economics and Computer Science student with experience in financial modeling, data analysis, and client-facing consulting work. Skilled in translating quantitative analysis into clear, actionable recommendations for cross-functional teams.
+
 %----------------- EDUCATION -----------------
 \\section*{Education}
 \\heading{Harvard University}{Cambridge, MA}{Bachelor of Arts in Economics and Computer Science}{Sept. 2022 -- May 2026}
@@ -417,11 +421,29 @@ const TEMPLATES = {
   \\item Coordinated recruiting events with 6 partner firms, connecting 100+ students to internship pipelines.
 \\end{itemize}
 
+%----------------- PROJECTS -----------------
+\\section*{Projects}
+\\heading{Undergraduate Thesis: Pricing Behavior in Retail Markets}{Cambridge, MA}{Harvard Department of Economics}{Sept. 2025 -- Present}
+\\begin{itemize}
+  \\item Building a regression model on 3 years of retail pricing data to study demand elasticity across product categories.
+  \\item Presenting preliminary findings at the department's undergraduate research symposium in Spring 2026.
+\\end{itemize}
+
+\\heading{Case Competition: Market Entry Strategy}{Cambridge, MA}{Harvard Undergraduate Consulting Group}{Nov. 2024}
+\\begin{itemize}
+  \\item Developed a market-entry recommendation for a simulated consumer goods client, placing top 3 of 24 teams.
+\\end{itemize}
+
 %----------------- SKILLS -----------------
 \\section*{Skills \\& Interests}
 \\textbf{Technical:} Excel (financial modeling), Python, SQL, Stata, Bloomberg Terminal, PowerPoint\\\\
 \\textbf{Languages:} English (native), Hindi (fluent), Spanish (conversational)\\\\
 \\textbf{Interests:} Long-distance running, chess, personal finance writing
+
+%----------------- CERTIFICATIONS -----------------
+\\section*{Certifications}
+\\heading{Bloomberg Market Concepts (BMC)}{}{Bloomberg}{2025}
+\\heading{Financial Modeling \\& Valuation Analyst (FMVA)}{}{Corporate Finance Institute}{2024}
 
 \\end{document}`,
   },
@@ -582,15 +604,16 @@ const ResumeEditor = () => {
 
   // Completion meter
   useEffect(() => {
-    const sections = [
-      "\\section{Education}",
-      "\\section{Experience}",
-      "\\section{Projects}",
-      "\\section{Skills}",
-      "\\section{Achievements}",
-    ];
-    const done = sections.filter(s => code.includes(s)).length;
-    setCompletion(Math.round((done / sections.length) * 100));
+    const sectionKeywords = ["Education", "Experience", "Projects", "Skills", "Achievements"];
+    // Match both \section{...} and \section*{...} (starred sections are common
+    // in single-column/CV-style templates like Harvard Pro and Deedy CV), and
+    // match on keyword rather than exact title so "Technical Skills",
+    // "Skills & Interests", etc. still count.
+    const sectionTitles = [...code.matchAll(/\\section\*?\{([^}]*)\}/g)].map(m => m[1]);
+    const done = sectionKeywords.filter(
+      keyword => sectionTitles.some(title => title.includes(keyword))
+    ).length;
+    setCompletion(Math.round((done / sectionKeywords.length) * 100));
   }, [code]);
 
   const compileLatex = async () => {
