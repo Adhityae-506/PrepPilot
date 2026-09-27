@@ -57,15 +57,23 @@ function extractSection(text, heading) {
   const remaining = text.slice(start);
   const lines = remaining.split("\n");
 
-  let inCodeBlock = false;
+  let codeFence = null;
   let end = remaining.length;
   let offset = 0;
 
   for (const line of lines) {
-    if (/^\s*```/.test(line)) {
-      inCodeBlock = !inCodeBlock;
+    if (/^\s*(`{3,})(.*)$/.test(line)) {
+      const match = line.match(/^\s*(`{3,})(.*)$/);
+      const fence = match[1];
+      const trailing = match[2].trim();
+
+      if (codeFence === null) {
+        codeFence = fence;
+      } else if (fence.length >= codeFence.length && trailing === "") {
+        codeFence = null;
+      }
     } else if (
-      !inCodeBlock &&
+      codeFence === null &&
       /^(?:#{1,3}\s*\**)[ ]*[A-Z][^#\n]*\**:?$/.test(line)
     ) {
       end = offset;
