@@ -107,10 +107,14 @@ const validateGetMyQuestions = (req, res, next) => {
 // Middleware for POST /api/question/study-plan. Rejects null/string/empty
 // entries and problems without a usable title with 400 before they ever
 // reach buildStudyPlan; zod's per-item error path (e.g. "problems.2.title")
-// tells the client exactly which index was invalid.
+// tells the client exactly which index was invalid. The parsed result is
+// assigned back to req.body so the handler receives the trimmed title/
+// difficulty and coerced numeric days — not the raw input — otherwise a
+// title with leading/trailing whitespace could pass the trimmed length
+// check yet still exceed 300 chars once it reaches the generated plan.
 const validateBuildStudyPlan = (req, res, next) => {
   try {
-    buildStudyPlanSchema.parse(req.body);
+    req.body = buildStudyPlanSchema.parse(req.body);
     next();
   } catch (error) {
     return handleValidationError(res, error);

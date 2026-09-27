@@ -111,6 +111,45 @@ describe("validateBuildStudyPlan — route layer (issue #2319)", () => {
 
     expect(next).toHaveBeenCalledTimes(1);
   });
+
+  // -------------------------------------------------------------------
+  // CodeRabbit review fix: the parsed (trimmed/coerced) result must be
+  // assigned back to req.body, otherwise a title or difficulty that passes
+  // the trimmed-length check could still reach the handler untrimmed and
+  // over the endpoint's stated limits.
+  // -------------------------------------------------------------------
+  it("reassigns the trimmed/coerced values back onto req.body", () => {
+    const res = mockRes();
+    const next = vi.fn();
+    const req = makeReq({
+      problems: [{ title: "  Two Sum  ", difficulty: "  easy  " }],
+      days: "3",
+    });
+
+    validateBuildStudyPlan(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req.body.problems[0].title).toBe("Two Sum");
+    expect(req.body.problems[0].difficulty).toBe("easy");
+    expect(req.body.days).toBe(3);
+    expect(typeof req.body.days).toBe("number");
+  });
+
+  it("rejects a title that is only over the limit before trimming, once trimmed", () => {
+    // A title of exactly 300 chars once trimmed must still pass; padding it
+    // with whitespace must not let a >300-char raw value slip through
+    // untrimmed to the handler.
+    const res = mockRes();
+    const next = vi.fn();
+    const paddedTitle = "  " + "x".repeat(300) + "  ";
+    const req = makeReq({ problems: [{ title: paddedTitle }], days: 1 });
+
+    validateBuildStudyPlan(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req.body.problems[0].title).toBe("x".repeat(300));
+    expect(req.body.problems[0].title.length).toBe(300);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -134,6 +173,23 @@ describe("buildStudyPlanHandler (issue #2319)", () => {
     expect(placed.map((p) => p.title).sort()).toEqual(
       ["Merge Intervals", "Two Sum", "Word Ladder"].sort()
     );
+  });
+
+  it("end-to-end through the validator: a plan never contains an untrimmed title", async () => {
+    const req = makeReq({ problems: [{ title: "  Two Sum  " }], days: 1 });
+    const validationRes = mockRes();
+    let validationPassed = false;
+
+    validateBuildStudyPlan(req, validationRes, () => {
+      validationPassed = true;
+    });
+    expect(validationPassed).toBe(true);
+
+    const res = mockRes();
+    await buildStudyPlanHandler(req, res);
+
+    const placed = res.body.plan.flatMap((d) => d.problems);
+    expect(placed[0].title).toBe("Two Sum");
   });
 
   it("still 400s if called without the route-layer validator (defensive backstop)", async () => {
