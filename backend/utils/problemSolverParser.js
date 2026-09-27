@@ -54,10 +54,26 @@ function extractSection(text, heading) {
   if (!match) return null;
 
   const start = match.index + match[0].length;
-  const next = text.slice(start).match(
-    /(?:^|\n)(?:#{1,3}\s*\**)[ ]*[A-Z][^#\n]*\**:?(?=\n|$)/
-  );
-  const end = next ? next.index : text.length;
+  const remaining = text.slice(start);
+  const lines = remaining.split("\n");
+
+  let inCodeBlock = false;
+  let end = remaining.length;
+  let offset = 0;
+
+  for (const line of lines) {
+    if (/^\s*```/.test(line)) {
+      inCodeBlock = !inCodeBlock;
+    } else if (
+      !inCodeBlock &&
+      /^(?:#{1,3}\s*\**)[ ]*[A-Z][^#\n]*\**:?$/.test(line)
+    ) {
+      end = offset;
+      break;
+    }
+
+    offset += line.length + 1;
+  }
 
   let section = text.slice(start, start + end).trim();
   section = section.replace(/\n+$/, "");
