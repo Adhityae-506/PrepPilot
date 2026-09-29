@@ -50,6 +50,7 @@ function extractSection(text, heading) {
     `(?:#{1,3}\\s*\\**|\\**)[ ]*${heading}[ ]*\\**(?:\\s*:)?`,
     "i"
   );
+
   const match = text.match(headingPattern);
   if (!match) return null;
 
@@ -62,14 +63,19 @@ function extractSection(text, heading) {
   let offset = 0;
 
   for (const line of lines) {
-    if (/^ {0,3}(`{3,})(.*)$/.test(line)) {
-      const match = line.match(/^ {0,3}(`{3,})(.*)$/);
-      const fence = match[1];
-      const trailing = match[2].trim();
+    const fenceMatch = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+
+    if (fenceMatch) {
+      const fence = fenceMatch[1];
+      const trailing = fenceMatch[2].trim();
 
       if (codeFence === null) {
         codeFence = fence;
-      } else if (fence.length >= codeFence.length && trailing === "") {
+      } else if (
+        fence[0] === codeFence[0] &&
+        fence.length >= codeFence.length &&
+        trailing === ""
+      ) {
         codeFence = null;
       }
     } else if (
@@ -85,6 +91,7 @@ function extractSection(text, heading) {
 
   let section = text.slice(start, start + end).trim();
   section = section.replace(/\n+$/, "");
+
   return section || null;
 }
 
