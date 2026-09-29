@@ -51,18 +51,52 @@ function extractSection(text, heading) {
     "i"
   );
 
-  const match = text.match(headingPattern);
-  if (!match) return null;
-
-  const start = match.index + match[0].length;
-  const remaining = text.slice(start);
-  const lines = remaining.split("\n");
-
+  const lines = text.split("\n");
   let codeFence = null;
+  let headingMatch = null;
+  let headingStart = 0;
+
+  for (let i = 0, offset = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const fenceMatch = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+
+    if (fenceMatch) {
+      const fence = fenceMatch[1];
+      const trailing = fenceMatch[2].trim();
+
+      if (codeFence === null) {
+        codeFence = fence;
+      } else if (
+        fence[0] === codeFence[0] &&
+        fence.length >= codeFence.length &&
+        trailing === ""
+      ) {
+        codeFence = null;
+      }
+    } else if (codeFence === null) {
+      const match = line.match(headingPattern);
+
+      if (match) {
+        headingMatch = match;
+        headingStart = offset + match.index;
+        break;
+      }
+    }
+
+    offset += line.length + 1;
+  }
+
+  if (!headingMatch) return null;
+
+  const start = headingStart + headingMatch[0].length;
+  const remaining = text.slice(start);
+  const remainingLines = remaining.split("\n");
+
+  codeFence = null;
   let end = remaining.length;
   let offset = 0;
 
-  for (const line of lines) {
+  for (const line of remainingLines) {
     const fenceMatch = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
 
     if (fenceMatch) {
